@@ -1,1 +1,645 @@
+<!DOCTYPE html>
+<html lang="th" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Portfolio | Interactive Resume</title>
 
+    <!-- Google Fonts: Prompt for Thai language support -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Phosphor Icons for UI elements -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Tailwind CSS Setup -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#6366f1', // Indigo 500
+                        secondary: '#ec4899', // Pink 500
+                    },
+                    animation: {
+                        'gradient-x': 'gradient-x 15s ease infinite',
+                        'blob': 'blob 7s infinite',
+                    },
+                    keyframes: {
+                        'gradient-x': {
+                            '0%, 100%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'left center'
+                            },
+                            '50%': {
+                                'background-size': '200% 200%',
+                                'background-position': 'right center'
+                            },
+                        },
+                        'blob': {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+        /* Background animated blobs */
+        .bg-blobs {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            overflow: hidden;
+            background-color: #f8fafc;
+            transition: background-color 0.3s ease;
+        }
+        .dark .bg-blobs { background-color: #0f172a; }
+        
+        .blob {
+            position: absolute;
+            filter: blur(80px);
+            opacity: 0.6;
+            border-radius: 50%;
+            animation: blob 7s infinite alternate;
+        }
+        .dark .blob { opacity: 0.3; }
+
+        .blob-1 { top: -10%; left: -10%; width: 500px; height: 500px; background: #c7d2fe; animation-delay: 0s; }
+        .blob-2 { top: 40%; right: -20%; width: 400px; height: 400px; background: #fbcfe8; animation-delay: 2s; }
+        .blob-3 { bottom: -20%; left: 20%; width: 600px; height: 600px; background: #e0e7ff; animation-delay: 4s; }
+        
+        .dark .blob-1 { background: #3730a3; }
+        .dark .blob-2 { background: #831843; }
+        .dark .blob-3 { background: #312e81; }
+
+        /* Skill Tree Path */
+        .skill-node { position: relative; }
+        .skill-node::after {
+            content: '';
+            position: absolute;
+            top: 100%; left: 50%;
+            width: 2px; height: 2rem;
+            background: #cbd5e1;
+            transform: translateX(-50%);
+        }
+        .dark .skill-node::after { background: #475569; }
+        .skill-node:last-child::after { display: none; }
+
+        /* --- NEW: Animations & Scroll Reveals --- */
+        .reveal { 
+            opacity: 0; 
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1); 
+        }
+        .reveal.active { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+        }
+        .fade-up { transform: translateY(50px); }
+        .fade-down { transform: translateY(-50px); }
+        .fade-in { transform: scale(0.95); }
+        
+        @keyframes jiggle {
+            0%, 100% { transform: rotate(0); }
+            25% { transform: rotate(-4deg) scale(1.05); }
+            75% { transform: rotate(4deg) scale(1.05); }
+        }
+        .hover-jiggle:hover { 
+            animation: jiggle 0.3s ease-in-out infinite; 
+            z-index: 20;
+        }
+        
+        @keyframes pan-up-down {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+        .animate-pan { animation: pan-up-down 4s ease-in-out infinite; }
+
+        /* Print Media Queries */
+        .print-header { display: none; }
+        
+        @media print {
+            body { 
+                background: white !important; 
+                color: black !important;
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact;
+            }
+            .bg-blobs, .blob { display: none !important; }
+            
+            /* Elements to hide during PDF export to protect personal info */
+            .no-print { display: none !important; }
+            
+            /* Elements to show only during PDF export */
+            .print-header { 
+                display: block !important; 
+                text-align: center;
+                margin-bottom: 2rem;
+                padding-bottom: 1rem;
+                border-bottom: 2px solid #e2e8f0;
+            }
+            
+            /* Adjustments for print layout */
+            section { page-break-inside: avoid; margin-bottom: 2rem !important; padding: 0 !important; }
+            .portfolio-grid { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 1rem !important; }
+            .card-shadow { box-shadow: none !important; border: 1px solid #e2e8f0 !important; }
+        }
+    </style>
+</head>
+<body class="text-slate-800 dark:text-slate-200 transition-colors duration-300 relative min-h-screen">
+
+    <!-- Background Animation -->
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <!-- Print Header (Only visible when printing to PDF) -->
+    <div class="print-header pt-8">
+        <h1 class="text-4xl font-bold text-slate-900">Professional Portfolio</h1>
+        <p class="text-slate-600 mt-2">Selected Works & Technical Skills</p>
+        <p class="text-sm text-slate-500 mt-1">Generated via Interactive Portfolio System</p>
+    </div>
+
+    <nav class="fixed w-full top-0 z-50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 no-print transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="#" class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+                        Portfolio.
+                    </a>
+                </div>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex space-x-8 items-center">
+                    <a href="#about" class="text-sm font-medium hover:text-primary transition-colors">About</a>
+                    <a href="#evolution" class="text-sm font-medium hover:text-primary transition-colors">Evolution</a>
+                    <a href="#portfolio" class="text-sm font-medium hover:text-primary transition-colors">Projects</a>
+                    <a href="#skills" class="text-sm font-medium hover:text-primary transition-colors">Skill Tree</a>
+                    
+                    <!-- Utilities -->
+                    <div class="flex items-center space-x-4 border-l border-slate-300 dark:border-slate-700 pl-4">
+                        <button id="theme-toggle" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors" title="Toggle Day/Night Mode">
+                            <i class="ph ph-moon text-xl dark:hidden"></i>
+                            <i class="ph ph-sun text-xl hidden dark:block text-yellow-400"></i>
+                        </button>
+                        <button onclick="window.print()" class="flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2 rounded-full text-sm font-medium hover:scale-105 transition-transform shadow-lg shadow-slate-900/20 dark:shadow-white/20">
+                            <i class="ph ph-file-pdf"></i>
+                            Export PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-20">
+        
+        <!-- Hero Section (Hidden in print to protect identity/photo) -->
+        <section id="home" class="min-h-[80vh] flex items-center justify-center relative px-4 no-print reveal fade-up">
+            <div class="text-center z-10 max-w-3xl animate-pan">
+                <div class="inline-block mb-4 px-4 py-1.5 rounded-full bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 backdrop-blur-sm text-sm font-medium">
+                    👋 สวัสดี, ยินดีต้อนรับสู่ Portfolio ของฉัน
+                </div>
+                <h1 class="text-5xl md:text-7xl font-bold mb-6 tracking-tight">
+                    Creative <span class="bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">Developer</span> <br/>& Designer
+                </h1>
+                <p class="text-lg md:text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+                    สร้างสรรค์ผลงานที่ผสมผสานระหว่างการออกแบบที่สวยงาม (UI/UX) และเทคโนโลยีที่ทันสมัย (Web Development) เพื่อแก้ปัญหาและสร้างประสบการณ์ที่ดีให้กับผู้ใช้งาน
+                </p>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <a href="#portfolio" class="px-8 py-3 bg-primary text-white rounded-full font-medium hover:bg-indigo-600 hover:shadow-lg hover:shadow-primary/30 transition-all hover-jiggle">ดูผลงาน (View Work)</a>
+                    <a href="#contact" class="px-8 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-all hover-jiggle">ติดต่อ (Contact)</a>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="py-20 px-4 no-print reveal fade-up">
+            <div class="max-w-5xl mx-auto">
+                <div class="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 md:p-12 shadow-xl shadow-slate-200/50 dark:shadow-none border border-white dark:border-slate-700 flex flex-col md:flex-row gap-10 items-center">
+                    <div class="w-48 h-48 md:w-64 md:h-64 shrink-0 rounded-2xl overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/20 p-2 shadow-inner">
+                        <!-- Profile Placeholder -->
+                        <div class="w-full h-full rounded-xl overflow-hidden relative group">
+                            <img src="https://placehold.co/400x400/1e293b/ffffff?text=Profile+Photo" alt="Profile" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        </div>
+                    </div>
+                    <div>
+                        <h2 class="text-3xl font-bold mb-4">ข้อมูลส่วนตัว (About Me)</h2>
+                        <p class="text-slate-600 dark:text-slate-300 leading-relaxed mb-6">
+                            ฉันมีความหลงใหลในการสร้างสรรค์ Digital Products ที่ใช้งานง่ายและมีประสิทธิภาพ เริ่มต้นจากการเป็น Graphic Designer ก่อนจะขยายทักษะมาสู่โลกของการพัฒนาเว็บไซต์และ UX/UI 
+                            เป้าหมายของฉันคือการเป็นส่วนหนึ่งในการสร้างเทคโนโลยีที่ส่งมอบ Impact เชิงบวกให้กับผู้คน
+                        </p>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div class="flex items-center gap-2"><i class="ph-fill ph-map-pin text-primary text-lg"></i> กรุงเทพมหานคร, ประเทศไทย</div>
+                            <div class="flex items-center gap-2"><i class="ph-fill ph-envelope-simple text-primary text-lg"></i> [ซ่อนไว้ในโหมด PDF]</div>
+                            <div class="flex items-center gap-2"><i class="ph-fill ph-graduation-cap text-primary text-lg"></i> ปริญญาตรี สารสนเทศศาสตร์</div>
+                            <div class="flex items-center gap-2"><i class="ph-fill ph-briefcase text-primary text-lg"></i> ว่างรับงาน (Available)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="evolution" class="py-20 px-4 reveal fade-in">
+            <div class="max-w-4xl mx-auto">
+                <div class="text-center mb-16 animate-pan">
+                    <h2 class="text-3xl font-bold mb-2">Past vs Present (การเติบโต)</h2>
+                    <p class="text-slate-600 dark:text-slate-400">เปรียบเทียบทักษะและมุมมองการทำงานตั้งแต่อดีตจนถึงปัจจุบัน</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8 relative">
+                    <!-- Connector line for desktop -->
+                    <div class="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-slate-200 via-primary/50 to-slate-200 dark:from-slate-700 dark:via-primary/50 dark:to-slate-700 transform -translate-x-1/2"></div>
+                    
+                    <!-- PAST -->
+                    <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-md p-8 rounded-2xl border border-slate-200 dark:border-slate-700 card-shadow relative">
+                        <div class="absolute -right-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 border-4 border-white dark:border-slate-900 hidden md:flex items-center justify-center z-10"><i class="ph ph-clock-counter-clockwise text-slate-500"></i></div>
+                        <span class="inline-block px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-sm font-medium mb-4">จุดเริ่มต้น (Past)</span>
+                        <h3 class="text-xl font-bold mb-4">Graphic Focus & Manual Process</h3>
+                        <ul class="space-y-3 text-slate-600 dark:text-slate-400">
+                            <li class="flex items-start gap-2"><i class="ph ph-x-circle text-red-400 mt-1"></i> <span>เน้นแค่ความสวยงาม โดยไม่ได้คำนึงถึง User Experience เท่าที่ควร</span></li>
+                            <li class="flex items-start gap-2"><i class="ph ph-x-circle text-red-400 mt-1"></i> <span>เขียนโค้ด HTML/CSS แบบ Static ไม่มีการใช้ Framework จัดการ State</span></li>
+                            <li class="flex items-start gap-2"><i class="ph ph-x-circle text-red-400 mt-1"></i> <span>ทำงานคนเดียว ไม่คุ้นเคยกับ Version Control (Git) หรือ Agile</span></li>
+                            <li class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                <strong>Tools:</strong> Photoshop, Illustrator, Vanilla JS
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- PRESENT -->
+                    <div class="bg-gradient-to-br from-white/90 to-primary/5 dark:from-slate-800/90 dark:to-primary/10 backdrop-blur-md p-8 rounded-2xl border border-primary/30 dark:border-primary/50 card-shadow relative md:mt-12 shadow-lg shadow-primary/10">
+                        <div class="absolute -left-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-full bg-primary border-4 border-white dark:border-slate-900 hidden md:flex items-center justify-center z-10"><i class="ph ph-rocket-launch text-white"></i></div>
+                        <span class="inline-block px-3 py-1 bg-primary/10 text-primary rounded-lg text-sm font-medium mb-4">ปัจจุบัน (Present)</span>
+                        <h3 class="text-xl font-bold mb-4">User-Centric & Modern Stack</h3>
+                        <ul class="space-y-3 text-slate-600 dark:text-slate-400">
+                            <li class="flex items-start gap-2"><i class="ph ph-check-circle text-green-500 mt-1"></i> <span>ออกแบบโดยอิงจาก Data และ Research เน้น Journey ของผู้ใช้ (UX)</span></li>
+                            <li class="flex items-start gap-2"><i class="ph ph-check-circle text-green-500 mt-1"></i> <span>พัฒนา Component-based architecture ด้วย React และ Tailwind CSS</span></li>
+                            <li class="flex items-start gap-2"><i class="ph ph-check-circle text-green-500 mt-1"></i> <span>ทำงานเป็นทีมได้อย่างดี ใช้ Gitflow และ CI/CD (Vercel)</span></li>
+                            <li class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                <strong class="text-primary">Tools:</strong> Figma, React, Next.js, Tailwind
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="portfolio" class="py-20 px-4 reveal fade-up">
+            <div class="max-w-6xl mx-auto">
+                <div class="text-center mb-10 animate-pan">
+                    <h2 class="text-3xl font-bold mb-2">ผลงาน (Portfolio)</h2>
+                    <p class="text-slate-600 dark:text-slate-400 mb-8">คลิกเลือกหมวดหมู่เพื่อกรองผลงาน</p>
+                    
+                    <!-- Category Filters -->
+                    <div class="flex flex-wrap justify-center gap-3 mb-12">
+                        <button class="filter-btn active px-5 py-2 rounded-full border border-slate-200 dark:border-slate-700 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-medium transition-all" data-filter="all">All</button>
+                        <button class="filter-btn px-5 py-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" data-filter="uxui">UX/UI Design</button>
+                        <button class="filter-btn px-5 py-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" data-filter="web">Web Tech</button>
+                        <button class="filter-btn px-5 py-2 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" data-filter="graphic">Graphic / Motion</button>
+                    </div>
+                </div>
+
+                <!-- Project Grid -->
+                <div class="portfolio-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-10">
+                    
+                    <!-- Project Card 1 -->
+                    <div class="project-card group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden card-shadow border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl" data-category="uxui web">
+                        <div class="relative h-48 overflow-hidden bg-slate-200 dark:bg-slate-700">
+                            <img src="https://placehold.co/600x400/14b8a6/ffffff?text=E-Commerce+App" alt="Project" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                            <div class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center no-print">
+                                <span class="text-white font-medium px-4 py-2 rounded-full border border-white/50 backdrop-blur-sm">View Details</span>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex gap-2 mb-3">
+                                <span class="text-xs font-semibold px-2 py-1 bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 rounded">UX/UI</span>
+                                <span class="text-xs font-semibold px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded">React</span>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2 group-hover:text-primary transition-colors">Smart Retail App</h3>
+                            <p class="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-2">ออกแบบและพัฒนาแอปพลิเคชัน E-Commerce ที่เน้นกระบวนการ Checkout ที่รวดเร็ว ลดอัตราการทิ้งตะกร้าสินค้า</p>
+                            <div class="text-sm border-t border-slate-100 dark:border-slate-700 pt-4 flex justify-between items-center text-slate-500">
+                                <span>Impact: +25% Conversion</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project Card 2 -->
+                    <div class="project-card group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden card-shadow border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl" data-category="uxui">
+                        <div class="relative h-48 overflow-hidden bg-slate-200 dark:bg-slate-700">
+                            <img src="https://placehold.co/600x400/a855f7/ffffff?text=Fintech+Dashboard" alt="Project" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                             <div class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center no-print">
+                                <span class="text-white font-medium px-4 py-2 rounded-full border border-white/50 backdrop-blur-sm">View Details</span>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex gap-2 mb-3">
+                                <span class="text-xs font-semibold px-2 py-1 bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 rounded">UX/UI</span>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2 group-hover:text-primary transition-colors">Fintech Dashboard</h3>
+                            <p class="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-2">ออกแบบ Data Visualization สำหรับระบบจัดการการเงินองค์กร เน้นความอ่านง่ายและแสดงข้อมูลแบบ Real-time</p>
+                            <div class="text-sm border-t border-slate-100 dark:border-slate-700 pt-4 flex justify-between items-center text-slate-500">
+                                <span>Tools: Figma, FigJam</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project Card 3 -->
+                    <div class="project-card group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden card-shadow border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl" data-category="graphic">
+                        <div class="relative h-48 overflow-hidden bg-slate-200 dark:bg-slate-700">
+                            <img src="https://placehold.co/600x400/ec4899/ffffff?text=Brand+Identity" alt="Project" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                            <div class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center no-print">
+                                <span class="text-white font-medium px-4 py-2 rounded-full border border-white/50 backdrop-blur-sm">View Details</span>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex gap-2 mb-3">
+                                <span class="text-xs font-semibold px-2 py-1 bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400 rounded">Graphic</span>
+                                <span class="text-xs font-semibold px-2 py-1 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 rounded">Motion</span>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2 group-hover:text-primary transition-colors">Rebranding Cafe</h3>
+                            <p class="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-2">ออกแบบอัตลักษณ์แบรนด์ใหม่ทั้งหมดให้กับคาเฟ่ รวมถึงโลโก้ บรรจุภัณฑ์ และ Motion Graphic สำหรับโซเชียลมีเดีย</p>
+                            <div class="text-sm border-t border-slate-100 dark:border-slate-700 pt-4 flex justify-between items-center text-slate-500">
+                                <span>Result: 3x Engagement Rate</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project Card 4 -->
+                    <div class="project-card group bg-white dark:bg-slate-800 rounded-2xl overflow-hidden card-shadow border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl" data-category="web">
+                        <div class="relative h-48 overflow-hidden bg-slate-200 dark:bg-slate-700">
+                            <img src="https://placehold.co/600x400/f59e0b/ffffff?text=Corporate+Website" alt="Project" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                            <div class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center no-print">
+                                <span class="text-white font-medium px-4 py-2 rounded-full border border-white/50 backdrop-blur-sm">View Details</span>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex gap-2 mb-3">
+                                <span class="text-xs font-semibold px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded">Web Tech</span>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2 group-hover:text-primary transition-colors">Corporate Landing Page</h3>
+                            <p class="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-2">พัฒนาเว็บไซต์ด้วย HTML/CSS/JS บริหารจัดการโครงสร้างให้ Load เร็ว ลด Bounce Rate และทำ SEO Optimization</p>
+                            <div class="text-sm border-t border-slate-100 dark:border-slate-700 pt-4 flex justify-between items-center text-slate-500">
+                                <span>Performance: 98/100 Lighthouse</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <section id="skills" class="py-20 px-4 bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm border-y border-white dark:border-slate-800 reveal fade-down">
+            <div class="max-w-4xl mx-auto">
+                <div class="text-center mb-16 animate-pan">
+                    <h2 class="text-3xl font-bold mb-2">โครงสร้างทักษะ (Skill Tree)</h2>
+                    <p class="text-slate-600 dark:text-slate-400 mb-2">ภาพรวมความสามารถทางด้านเทคนิคและการออกแบบ</p>
+                    <div class="inline-flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 px-4 py-2 rounded-full text-xs font-medium border border-yellow-200 dark:border-yellow-700/50 hover-jiggle shadow-sm">
+                        <i class="ph-fill ph-info"></i>
+                        <span>เรทความถนัด: เลื่อนเมาส์หรือแตะที่ทักษะเพื่อดูระดับ 5 (มากสุด) - 1 (เริ่มต้น)</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center">
+                    
+                    <!-- Core Skill -->
+                    <div class="skill-node bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold px-8 py-3 rounded-xl shadow-lg z-10 mb-8 hover-jiggle cursor-default">
+                        Product Creator
+                    </div>
+
+                    <div class="w-full max-w-3xl border-t-2 border-slate-300 dark:border-slate-700 relative pt-8 flex flex-col md:flex-row justify-between gap-8 md:gap-4 mt-[-2rem]">
+                        <!-- Connectors for Desktop Layout -->
+                        <div class="hidden md:block absolute top-0 left-1/4 w-px h-8 bg-slate-300 dark:bg-slate-700"></div>
+                        <div class="hidden md:block absolute top-0 left-1/2 w-px h-8 bg-slate-300 dark:bg-slate-700"></div>
+                        <div class="hidden md:block absolute top-0 right-1/4 w-px h-8 bg-slate-300 dark:bg-slate-700"></div>
+
+                        <!-- Branch 1: Design -->
+                        <div class="flex-1 flex flex-col items-center">
+                            <div class="bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-300 font-semibold px-6 py-2 rounded-lg mb-4 text-center w-full max-w-[200px] hover-jiggle cursor-default shadow-sm border border-teal-200 dark:border-teal-700">
+                                <i class="ph ph-pen-nib mr-2 animate-pulse"></i> Design
+                            </div>
+                            <div class="flex flex-col gap-3 w-full max-w-[200px]">
+                                <!-- Skill Node with Interactive Hover/Touch -->
+                                <div class="relative group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg text-sm text-center shadow-sm cursor-help overflow-hidden hover-jiggle">
+                                    <span class="block transition-transform duration-300 group-hover:-translate-y-8">UX/UI Research</span>
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-teal-500 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                        <span class="text-[10px] font-bold tracking-wider mb-0.5">LEVEL 4</span>
+                                        <div class="flex text-yellow-300 text-xs"><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph ph-star"></i></div>
+                                    </div>
+                                </div>
+                                <div class="relative group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg text-sm text-center shadow-sm cursor-help overflow-hidden hover-jiggle">
+                                    <span class="block transition-transform duration-300 group-hover:-translate-y-8">Wireframing (Figma)</span>
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-teal-500 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                        <span class="text-[10px] font-bold tracking-wider mb-0.5">LEVEL 5</span>
+                                        <div class="flex text-yellow-300 text-xs"><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i></div>
+                                    </div>
+                                </div>
+                                <div class="relative group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg text-sm text-center shadow-sm cursor-help overflow-hidden hover-jiggle">
+                                    <span class="block transition-transform duration-300 group-hover:-translate-y-8">Design Systems</span>
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-teal-500 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                        <span class="text-[10px] font-bold tracking-wider mb-0.5">LEVEL 4</span>
+                                        <div class="flex text-yellow-300 text-xs"><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph ph-star"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Branch 2: Development -->
+                        <div class="flex-1 flex flex-col items-center">
+                            <div class="bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300 font-semibold px-6 py-2 rounded-lg mb-4 text-center w-full max-w-[200px] hover-jiggle cursor-default shadow-sm border border-blue-200 dark:border-blue-700">
+                                <i class="ph ph-code mr-2 animate-pulse"></i> Development
+                            </div>
+                            <div class="flex flex-col gap-3 w-full max-w-[200px]">
+                                <div class="relative group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg text-sm text-center shadow-sm cursor-help overflow-hidden hover-jiggle">
+                                    <span class="block transition-transform duration-300 group-hover:-translate-y-8">HTML / CSS / JS</span>
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-blue-500 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                        <span class="text-[10px] font-bold tracking-wider mb-0.5">LEVEL 5</span>
+                                        <div class="flex text-yellow-300 text-xs"><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i></div>
+                                    </div>
+                                </div>
+                                <div class="relative group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 border-l-4 border-l-blue-500 p-3 rounded-lg text-sm text-center shadow-sm cursor-help overflow-hidden hover-jiggle">
+                                    <span class="block transition-transform duration-300 group-hover:-translate-y-8">React & Next.js</span>
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-blue-500 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                        <span class="text-[10px] font-bold tracking-wider mb-0.5">LEVEL 4</span>
+                                        <div class="flex text-yellow-300 text-xs"><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph ph-star"></i></div>
+                                    </div>
+                                </div>
+                                <div class="relative group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg text-sm text-center shadow-sm cursor-help overflow-hidden hover-jiggle">
+                                    <span class="block transition-transform duration-300 group-hover:-translate-y-8">Tailwind CSS</span>
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-blue-500 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                        <span class="text-[10px] font-bold tracking-wider mb-0.5">LEVEL 5</span>
+                                        <div class="flex text-yellow-300 text-xs"><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Branch 3: Tools & Soft Skills -->
+                        <div class="flex-1 flex flex-col items-center">
+                            <div class="bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300 font-semibold px-6 py-2 rounded-lg mb-4 text-center w-full max-w-[200px] hover-jiggle cursor-default shadow-sm border border-purple-200 dark:border-purple-700">
+                                <i class="ph ph-wrench mr-2 animate-pulse"></i> Tools & Core
+                            </div>
+                            <div class="flex flex-col gap-3 w-full max-w-[200px]">
+                                <div class="relative group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg text-sm text-center shadow-sm cursor-help overflow-hidden hover-jiggle">
+                                    <span class="block transition-transform duration-300 group-hover:-translate-y-8">Git & GitHub</span>
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-purple-500 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                        <span class="text-[10px] font-bold tracking-wider mb-0.5">LEVEL 4</span>
+                                        <div class="flex text-yellow-300 text-xs"><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph ph-star"></i></div>
+                                    </div>
+                                </div>
+                                <div class="relative group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg text-sm text-center shadow-sm cursor-help overflow-hidden hover-jiggle">
+                                    <span class="block transition-transform duration-300 group-hover:-translate-y-8">Agile / Scrum</span>
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-purple-500 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                        <span class="text-[10px] font-bold tracking-wider mb-0.5">LEVEL 3</span>
+                                        <div class="flex text-yellow-300 text-xs"><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph ph-star"></i><i class="ph ph-star"></i></div>
+                                    </div>
+                                </div>
+                                <div class="relative group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-lg text-sm text-center shadow-sm cursor-help overflow-hidden hover-jiggle">
+                                    <span class="block transition-transform duration-300 group-hover:-translate-y-8">Problem Solving</span>
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-purple-500 text-white translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                        <span class="text-[10px] font-bold tracking-wider mb-0.5">LEVEL 5</span>
+                                        <div class="flex text-yellow-300 text-xs"><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i><i class="ph-fill ph-star"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="py-20 px-4 no-print reveal fade-in">
+            <div class="max-w-3xl mx-auto text-center animate-pan">
+                <h2 class="text-3xl font-bold mb-6">สนใจร่วมงานด้วยกัน? (Contact)</h2>
+                <p class="text-slate-600 dark:text-slate-400 mb-10">หากคุณกำลังมองหานักออกแบบหรือนักพัฒนาที่พร้อมลุยโปรเจกต์ใหม่ๆ ติดต่อมาได้เลย!</p>
+                
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-xl border border-slate-100 dark:border-slate-700">
+                    <form class="space-y-4 text-left" onsubmit="event.preventDefault(); alert('ขอบคุณที่ติดต่อมา! (ฟังก์ชันจำลอง)');">
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">ชื่อ (Name)</label>
+                                <input type="text" class="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" placeholder="ชื่อของคุณ">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">อีเมล (Email)</label>
+                                <input type="email" class="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" placeholder="your@email.com">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">ข้อความ (Message)</label>
+                            <textarea rows="4" class="w-full px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" placeholder="พิมพ์ข้อความของคุณที่นี่..."></textarea>
+                        </div>
+                        <button type="submit" class="w-full py-3 bg-primary text-white font-medium rounded-lg hover:bg-indigo-600 transition-colors">ส่งข้อความ (Send Message)</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer (Hidden on print) -->
+    <footer class="py-8 text-center text-slate-500 text-sm no-print border-t border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 mt-10">
+        <p>&copy; 2026 Interactive Portfolio. All rights reserved.</p>
+        <p class="mt-2 text-xs">Developed with HTML, Tailwind & Vanilla JS.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- NEW: Scroll Reveal Animation (Trigger on scroll up and down) ---
+            const revealElements = document.querySelectorAll('.reveal');
+            
+            const revealObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active'); // Fade in
+                    } else {
+                        entry.target.classList.remove('active'); // Reset to fade out (triggers again on feed up/down)
+                    }
+                });
+            }, {
+                threshold: 0.15, // Trigger when 15% of the element is visible
+                rootMargin: "0px 0px -50px 0px" // Slight offset
+            });
+
+            revealElements.forEach(el => revealObserver.observe(el));
+
+            // --- Theme Toggle Logic ---
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const htmlTag = document.documentElement;
+            
+            // Check for saved theme preference or OS preference
+            if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                htmlTag.classList.add('dark');
+            } else {
+                htmlTag.classList.remove('dark');
+            }
+
+            themeToggleBtn.addEventListener('click', () => {
+                if (htmlTag.classList.contains('dark')) {
+                    htmlTag.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                } else {
+                    htmlTag.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                }
+            });
+
+            // --- Portfolio Filtering Logic ---
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            const projectCards = document.querySelectorAll('.project-card');
+
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Update active button styling
+                    filterBtns.forEach(b => {
+                        b.classList.remove('bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900');
+                        b.classList.add('hover:bg-slate-100', 'dark:hover:bg-slate-800');
+                    });
+                    btn.classList.add('bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900');
+                    btn.classList.remove('hover:bg-slate-100', 'dark:hover:bg-slate-800');
+
+                    const filterValue = btn.getAttribute('data-filter');
+
+                    // Filter cards
+                    projectCards.forEach(card => {
+                        const categories = card.getAttribute('data-category');
+                        
+                        // Add fade out animation logic
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.95)';
+                        
+                        setTimeout(() => {
+                            if (filterValue === 'all' || categories.includes(filterValue)) {
+                                card.style.display = 'block';
+                                setTimeout(() => {
+                                    card.style.opacity = '1';
+                                    card.style.transform = 'scale(1)';
+                                }, 50);
+                            } else {
+                                card.style.display = 'none';
+                            }
+                        }, 300); // Wait for fade out to complete
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>
